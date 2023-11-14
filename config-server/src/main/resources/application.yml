@@ -1,0 +1,22 @@
+server:
+  port: 9992
+
+spring:
+  application:
+    name: config-server
+  cloud:
+    config:
+      server:
+        git:
+          uri: https://gitee.com/jiang-wanghong/springcloud-config.git  # 仓库链接
+          search-paths:
+            - springcloud-config
+          username: 19330581925
+          password:
+          default-label: master
+      label: master
+
+eureka:
+  client:
+    serviceUrl: #注册中心注册地址
+      defaultZone: http://127.0.0.1:8080/eureka/

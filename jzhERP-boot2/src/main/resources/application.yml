@@ -1,0 +1,45 @@
+springdoc:
+  packages-to-scan: ##需要扫描的包,可以配置多个
+    - com.jzh.erp.controller
+    - com.jzh.erp.dianzhan
+  paths-to-exclude:  ##配置不包含在swagger文档中的api
+    - /api/test/**
+    - /api/mockito/data
+  swagger-ui:
+    enabled: true  #开启/禁止swagger,prod可以设置为false
+  #  path: /swagger-ui.html  #swagger页面
+    path: /doc.html
+  api-docs:
+    enabled: true #开启/禁止api-docs, prod可以设置为false
+    path: /api-docs #api的json文档
+  use-management-port: false
+
+
+#server:
+#  port: 8082  #服务端口
+eureka:
+  client:
+    serviceUrl: #注册中心注册地址
+      defaultZone: http://127.0.0.1:8080/eureka/
+    #  defaultZone: http://47.94.103.129:8080/eureka/
+    #  defaultZone: http://192.168.10.140:8080/eureka/
+spring:
+  application:
+    name: cloud-jzh-erp2 #服务名称
+
+
+seata:
+  application-id: cloud-consumer-hystrix-payment
+  tx-service-group: my_erp_tx_group
+  service:
+    vgroup-mapping:
+      # 此处配置对应Server端配置registry.eureka.application的值
+      my_erp_tx_group: jzh-erp-seata
+  registry:
+    type: eureka
+    eureka:
+      service-url: http://localhost:8080/eureka
+      weight: 1
+
+config:
+  info: jzherp-boot2-config-prodwww

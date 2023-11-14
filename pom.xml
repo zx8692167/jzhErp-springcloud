@@ -8,7 +8,7 @@
 	<!--<packaging>jar</packaging>-->
 	<packaging>pom</packaging>
 
-	<name>jzhERP-upgrade</name>
+	<name>jzhERP-springcloud</name>
 	<description>房产ERP</description>
 
 	<parent>

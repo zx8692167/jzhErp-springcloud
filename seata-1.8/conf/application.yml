@@ -1,0 +1,143 @@
+#  Copyright 1999-2019 Seata.io Group.
+#
+#  Licensed under the Apache License, Version 2.0 (the "License");
+#  you may not use this file except in compliance with the License.
+#  You may obtain a copy of the License at
+#
+#  http://www.apache.org/licenses/LICENSE-2.0
+#
+#  Unless required by applicable law or agreed to in writing, software
+#  distributed under the License is distributed on an "AS IS" BASIS,
+#  WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+#  See the License for the specific language governing permissions and
+#  limitations under the License.
+
+server:
+  port: 7091
+
+spring:
+  application:
+    name: seata-server
+
+logging:
+  config: classpath:logback-spring.xml
+  file:
+    path: ${log.home:${user.home}/logs/seata}
+  extend:
+    logstash-appender:
+      destination: 127.0.0.1:4560
+    kafka-appender:
+      bootstrap-servers: 127.0.0.1:9092
+      topic: logback_to_logstash
+
+console:
+  user:
+    username: seata
+    password: seata
+seata:
+  config:
+    # support: nacos, consul, apollo, zk, etcd3
+    type: file
+#    file:
+#      name: file.conf
+
+  registry:
+    # support: nacos, eureka, redis, zk, consul, etcd3, sofa
+    #type: file
+    type: eureka
+
+    eureka:
+      #service-url: http://localhost:8761/eureka
+      service-url: http://localhost:8080/eureka
+      application: jzh-erp-seata
+      weight: 1
+
+  server:
+    service-port: 8091 #If not configured, the default is '${server.port} + 1000'
+    max-commit-retry-timeout: -1
+    max-rollback-retry-timeout: -1
+    rollback-retry-timeout-unlock-enable: false
+    enable-check-auth: true
+    enable-parallel-request-handle: true
+    retry-dead-threshold: 130000
+    xaer-nota-retry-timeout: 60000
+    enableParallelRequestHandle: true
+    recovery:
+      committing-retry-period: 1000
+      async-committing-retry-period: 1000
+      rollbacking-retry-period: 1000
+      timeout-retry-period: 1000
+    undo:
+      log-save-days: 7
+      log-delete-period: 86400000
+    session:
+      branch-async-queue-size: 5000 #branch async remove queue size
+      enable-branch-async-remove: false #enable to asynchronous remove branchSession
+
+  store:
+    # support: file 、 db 、 redis
+    mode: file
+    #mode: db
+#  server:
+#    service-port: 8091 #If not configured, the default is '${server.port} + 1000'
+
+    ## rsa decryption public key
+#    publicKey: ""
+#
+#    ## database store property
+#    db:
+#    ## the implement of javax.sql.DataSource, such as DruidDataSource(druid)/BasicDataSource(dbcp) etc.
+#    datasource: "druid"
+#    ## mysql/oracle/postgresql/h2/oceanbase etc.
+#    dbType: "mysql"
+#    driverClassName: "com.mysql.cj.jdbc.Driver"
+#    ## if using mysql to store the data, recommend add rewriteBatchedStatements=true in jdbc connection param
+#    url: "jdbc:mysql://127.0.0.1:3306/jzh_erp?rewriteBatchedStatements=true&characterEncoding=utf8&useSSL=false"
+#    user: "root"
+#    password: "root"
+#    minConn: 5
+#    maxConn: 30
+#    globalTable: "global_table"
+#    branchTable: "branch_table"
+#    lockTable: "lock_table"
+#    queryLimit: 100
+
+#    db:
+#      datasource: druid
+#      db-type: mysql
+#      driver-class-name: com.mysql.jdbc.Driver
+#      #url: jdbc:mysql://127.0.0.1:3306/seata?rewriteBatchedStatements=true    useUnicode=true&characterEncoding=utf8&useCursorFetch=true&defaultFetchSize=500&allowMultiQueries=true&rewriteBatchedStatements=true&useSSL=false&serverTimezone=GMT%2B8
+#      url: jdbc:mysql://127.0.0.1:3306/jzh_erp?useUnicode=true&characterEncoding=utf8&useSSL=false
+#      user: jzh
+#      password: Root@123456
+#      min-conn: 10
+#      max-conn: 100
+#      global-table: global_table
+#      branch-table: branch_table
+#      lock-table: lock_table
+#      distributed-lock-table: distributed_lock
+#      query-limit: 1000
+#      max-wait: 5000
+  metrics:
+    enabled: false
+    registry-type: compact
+    exporter-list: prometheus
+    exporter-prometheus-port: 9898
+  transport:
+    rpc-tc-request-timeout: 15000
+    enable-tc-server-batch-send-response: false
+    shutdown:
+      wait: 3
+    thread-factory:
+      boss-thread-prefix: NettyBoss
+      worker-thread-prefix: NettyServerNIOWorker
+      boss-thread-size: 1
+
+
+
+
+  security:
+    secretKey: SeataSecretKey0c382ef121d778043159209298fd40bf3850a017
+    tokenValidityInMilliseconds: 1800000
+    ignore:
+      urls: /,/**/*.css,/**/*.js,/**/*.html,/**/*.map,/**/*.svg,/**/*.png,/**/*.jpeg,/**/*.ico,/api/v1/auth/login

@@ -1,0 +1,23 @@
+server:
+  port: 9993  #服务端口
+
+eureka:
+  client:
+    serviceUrl: #注册中心注册地址
+      defaultZone: http://127.0.0.1:8080/eureka/
+spring:
+  application:
+    name: cloud-jzh-erp2 #服务名称
+
+  cloud:
+    config:
+      name: jzherp-boot2-config  #配置文件名称
+      profile: prod  #后缀名称
+      discovery:
+        enabled: true
+        service-id: config-server
+  main:
+    allow-bean-definition-overriding: true
+
+config:
+  info: jzherp-boot2-config-prodsss

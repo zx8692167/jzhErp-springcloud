@@ -1,0 +1,142 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="com.jzh.erp.datasource.mappers.UserMapperEx">
+    <resultMap extends="com.jzh.erp.datasource.mappers.UserMapper.BaseResultMap" id="ResultMapEx" type="com.jzh.erp.datasource.entities.UserEx">
+        <result column="orgaId" jdbcType="BIGINT" property="orgaId" />
+        <result column="org_abr" jdbcType="VARCHAR" property="orgAbr" />
+        <result column="user_blng_orga_dspl_seq" jdbcType="VARCHAR" property="userBlngOrgaDsplSeq" />
+        <result column="orgaUserRelId" jdbcType="BIGINT" property="orgaUserRelId" />
+        <result column="roleId" jdbcType="VARCHAR" property="roleId" />
+        <result column="roleName" jdbcType="VARCHAR" property="roleName" />
+    </resultMap>
+    <select id="selectByConditionUser" parameterType="com.jzh.erp.datasource.entities.UserExample" resultMap="ResultMapEx">
+        select tb.*,
+        (select r.id from jzh_user_business ub
+        left join jzh_role r on ub.value=concat("[",r.id,"]") and ifnull(r.delete_flag,'0') !='1'
+        where ub.type='UserRole' and ub.key_id=tb.id limit 0,1) roleId,
+        (select r.name from jzh_user_business ub
+        left join jzh_role r on ub.value=concat("[",r.id,"]") and ifnull(r.delete_flag,'0') !='1'
+        where ub.type='UserRole' and ub.key_id=tb.id limit 0,1) roleName
+        from (
+        select user.id, user.username, user.login_name, user.position, user.leader_flag, user.email, user.phonenum,
+        user.description, user.remark,user.isystem,org.id as orgaId,user.tenant_id,user.status,org.org_abr,
+        rel.user_blng_orga_dspl_seq,rel.id as orgaUserRelId
+        FROM jzh_user user
+        left join jzh_orga_user_rel rel on user.id=rel.user_id and ifnull(rel.delete_flag,'0') !='1'
+        left join jzh_organization org on rel.orga_id=org.id and ifnull(org.delete_flag,'0') !='1'
+        where 1=1
+        and user.status !='1'
+        <if test="userName != null">
+            <bind name="bindUserName" value="'%'+userName+'%'"/>
+            and user.username like #{bindUserName}
+        </if>
+        <if test="loginName != null">
+            <bind name="bindLoginName" value="'%'+loginName+'%'"/>
+            and user.login_name like #{bindLoginName}
+        </if>
+        order by rel.user_blng_orga_dspl_seq,user.id desc
+        <if test="offset != null and rows != null">
+            limit #{offset},#{rows}
+        </if>
+        ) tb
+    </select>
+    <select id="countsByUser" resultType="java.lang.Long">
+        select count(user.id)
+        FROM jzh_user user
+        where 1=1
+        and user.status !='1'
+        <if test="userName != null">
+            <bind name="bindUserName" value="'%'+userName+'%'"/>
+            and user.username like #{bindUserName}
+        </if>
+        <if test="loginName != null">
+            <bind name="bindLoginName" value="'%'+loginName+'%'"/>
+            and user.login_name like #{bindLoginName}
+        </if>
+    </select>
+    <select id="getUserListByUserNameOrLoginName" resultMap="com.jzh.erp.datasource.mappers.UserMapper.BaseResultMap">
+        select user.id, user.username, user.login_name, user.position, user.email, user.phonenum,
+        user.description, user.remark,user.isystem
+        FROM jzh_user user
+        where 1=1
+        and ifnull(user.status,'0') not in('1','2')
+        <if test="userName != null and userName != ''">
+            and user.userName = #{userName}
+        </if>
+        <if test="loginName != null and loginName != ''">
+            and user.login_name = #{loginName}
+        </if>
+        order by user.id desc
+    </select>
+    <update id="batDeleteOrUpdateUser">
+        update jzh_user
+        set status=#{status}
+        where id in (
+        <foreach collection="ids" item="id" separator=",">
+            #{id}
+        </foreach>
+        )
+    </update>
+
+    <resultMap id="BaseTreeResultMap" type="com.jzh.erp.datasource.vo.TreeNodeEx">
+        <result column="id" property="id"/>
+        <result column="text" property="text"/>
+        <association property="attributes" javaType="com.jzh.erp.datasource.vo.NodeAttributes">
+            <id column="no" property="no"></id>
+            <result column="type" property="type"></result>
+        </association>
+        <collection column="{id=id,no=no}" property="children" javaType="java.util.ArrayList"
+                    ofType="com.jzh.erp.datasource.vo.TreeNode" select="getNextNodeTree"/>
+    </resultMap>
+
+    <resultMap id="NextTreeResultMap" type="com.jzh.erp.datasource.vo.TreeNodeEx">
+        <result column="id" property="id"/>
+        <result column="text" property="text"/>
+        <result column="iconCls" property="iconCls"/>
+        <association property="attributes" javaType="com.jzh.erp.datasource.vo.NodeAttributes">
+            <id column="no" property="no"></id>
+            <result column="type" property="type"></result>
+        </association>
+        <collection column="{id=id,no=no}" property="children" javaType="java.util.ArrayList"
+                    ofType="com.jzh.erp.datasource.vo.TreeNode" select="getNextNodeTree"/>
+    </resultMap>
+
+    <select id="getNextNodeTree" resultMap="NextTreeResultMap">
+        select id ,	text,no,sort ,iconCls,type from (
+            (SELECT
+            org.id, org.org_abr as text,org.org_no as no,org.sort as sort,null as iconCls,'0' as type
+            FROM jzh_organization org
+            WHERE org.parent_id = #{no})
+            union all
+            (select
+            user.id,user.username as text, null as no,rel.user_blng_orga_dspl_seq as sort,'icon-user' as iconCls,'1' as type
+            from jzh_user user,jzh_orga_user_rel rel
+            where  user.id=rel.user_id
+            and rel.orga_id=#{id}
+            and ifnull(rel.delete_flag,'0') !='1'
+            and ifnull(user.status,'0') not in('1','2'))
+          ) node
+          order by sort asc
+    </select>
+
+    <select id="getNodeTree" resultMap="BaseTreeResultMap">
+        SELECT
+         id, org_abr as text,org_no as no,'0' as type
+        FROM jzh_organization
+        order by sort asc
+    </select>
+
+    <update id="disableUserByLimit">
+        update jzh_user set Status='2'
+        where tenant_id=#{tenantId} and id!=#{tenantId} and Status!='1'
+    </update>
+
+    <select id="getListByOrgaId" resultType="com.jzh.erp.datasource.entities.User">
+        select u.*,our.orga_id from jzh_user u
+        left join jzh_orga_user_rel our on u.id=our.user_id
+        where u.leader_flag='1' and orga_id= #{orgaId}
+        <if test="id != null">
+            and u.id != #{id}
+        </if>
+    </select>
+</mapper>
